@@ -29,7 +29,7 @@ namespace WpfApp1
         int currBitmap;
         const int bitmapCount = 2;
         OBJRenderer render;
-        float pitch = 0, yaw=90f;
+        float pitch = 0, yaw=-90;
 
         public MainWindow()
         {
@@ -146,7 +146,7 @@ namespace WpfApp1
             if (pitch < -89.0f)
                 pitch = -89.0f;
 
-            render.SetCamera(pitch, yaw);
+            render.SetCamera(90-pitch, 90-yaw);
             Redraw();
         }
 

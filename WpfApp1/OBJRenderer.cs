@@ -59,7 +59,7 @@ namespace WpfApp1
             var dist = Math.Max(w, h);
             dist = dist * 1.5f/(dist / Math.Min(w, h));
 
-            return new Vector3((float)(0 / 180.0 * Math.PI), (float)(90 / 180.0 * Math.PI), dist+frame.MaxVect.Z );
+            return new Vector3((float)(90 / 180.0 * Math.PI), (float)(0/ 180.0 * Math.PI), dist+frame.MaxVect.Z );
 
         }
 
@@ -67,11 +67,11 @@ namespace WpfApp1
         {
             var target = new Vector3(mid.X, mid.Y, mid.Z) + delta;
 
-            var eye = new Vector3((float)(currEye.Z * Math.Cos(currEye.X) * Math.Cos(currEye.Y)),
-                                  (float)(currEye.Z * Math.Sin(currEye.X)),
-                                  (float)(currEye.Z * Math.Cos(currEye.X) * Math.Sin(currEye.Y)));
+            var eye = new Vector3((float)(currEye.Z * Math.Sin(currEye.X) * Math.Sin(currEye.Y)),
+                                  (float)(currEye.Z * Math.Cos(currEye.X)),
+                                  (float)(currEye.Z * Math.Sin(currEye.X) * Math.Cos(currEye.Y)));
 
-            Vector3 x = new Vector3((float)Math.Sin(currEye.Y), 0, -(float)Math.Cos(currEye.Y));
+            Vector3 x = new Vector3((float)Math.Cos(currEye.Y), 0, -(float)Math.Sin(currEye.Y));
 
             var zAsix = Vector3.Normalize(eye - target);
 
@@ -149,7 +149,7 @@ namespace WpfApp1
 
             float plusX = 0, plusY = 0;
 
-            int black = ~0;
+            int white = ~0;
 
             unsafe
             {
@@ -163,7 +163,7 @@ namespace WpfApp1
                     plusX += deltX;
                     plusY += deltY;
 
-                    *((int*)pBackBuffer) = black;
+                    *((int*)pBackBuffer) = white;
                 }
             }
         }
