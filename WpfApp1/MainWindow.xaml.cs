@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,11 +29,12 @@ namespace WpfApp1
         int currBitmap;
         const int bitmapCount = 2;
         OBJRenderer render;
-        float pitch = 0, yaw=-90f;
+        float pitch = 0, yaw=90f;
 
         public MainWindow()
         {
             InitializeComponent();
+            
         }
 
         void OnLoad(object sender, RoutedEventArgs e)
@@ -108,13 +110,16 @@ namespace WpfApp1
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            isMoving = true;
+            canvas.CaptureMouse();
+            isMoving = true; 
             prevPosition = e.GetPosition(canvas);
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
+            canvas.ReleaseMouseCapture();
             isMoving = false;
+            prevPosition = e.GetPosition(canvas);
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
@@ -127,51 +132,23 @@ namespace WpfApp1
             
             prevPosition = e.GetPosition(canvas);
 
-            float sensitivity = 0.01f;
+            float sensitivity = 0.3f;
 
 
             xoffset *= sensitivity;
             yoffset *= sensitivity;
 
-            //yaw += xoffset;
-            pitch += yoffset;
+            yaw += xoffset;
+            pitch -= yoffset;
 
             if (pitch > 89.0f)
                 pitch = 89.0f;
             if (pitch < -89.0f)
                 pitch = -89.0f;
 
-            render.SetCamera(yaw, pitch);
+            render.SetCamera(pitch, yaw);
             Redraw();
         }
 
-        private void OnMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-
-        }
-
-        private void OnKeyDown(object sender, KeyEventArgs e)
-        {/*
-            float speed = 0.5f; 
-            switch (e.Key)
-            {
-                case Key.W:
-                    render.MoveOnDeltaZ(-speed);
-                    Redraw();
-                    break;
-                case Key.S:
-                    render.MoveOnDeltaZ(speed);
-                    Redraw();
-                    break;
-                case Key.A:
-                    render.MoveOnDeltaX(-speed);
-                    Redraw();
-                    break;
-                case Key.D:
-                    render.MoveOnDeltaX(speed);
-                    Redraw();
-                    break;
-            }*/
-        }
     }
 }

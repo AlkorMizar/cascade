@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Data.Common;
 using System.Windows;
 using System.Numerics;
+using System.Security.Cryptography;
 
 namespace WpfApp1
 {
@@ -17,10 +18,12 @@ namespace WpfApp1
         Vector3 delta;
         Vector3 currEye = new Vector3(-1, -1, -1); // in sperical
         Vector3 Xway = new Vector3(-1, -1, -1);
+        float fov = 60;
 
         public OBJRenderer(Obj _obj)
         {
             obj = _obj;
+            currEye = GenrateCurrCameraPoint();
         }
 
         private Matrix4x4 GenerateWorldTransform(Vector4 middle)
@@ -41,24 +44,53 @@ namespace WpfApp1
             delta.Z += deltaZ;
         }
 
-        public void SetCamera(float x,float y)
+        public void SetCamera(float pitch,float yaw)
         {
-            if (currEye.X != -1)
-            {
-                currEye.X = x;
-                currEye.Y = y;
 
-            }
+            currEye.X = (float)(pitch / 180 * Math.PI);
+            currEye.Y = (float)(yaw / 180 * Math.PI);
         }
 
-        private Matrix4x4 GenerateCameraTransform(Vector4 min, Vector4 max, Vector4 mid, out Vector3 eye, float fov)
+        private Vector3 GenrateCurrCameraPoint() {
+            var frame = obj.NewFrame();
+
+            frame.TranslateTo(GenerateWorldTransform(-frame.Middle));
+            float w= (frame.MaxVect.X - frame.MinVect.X),h=(frame.MaxVect.Y - frame.MinVect.Y);
+            var dist = Math.Max(w, h);
+            dist = dist * 1.5f/(dist / Math.Min(w, h));
+
+            return new Vector3((float)(0 / 180.0 * Math.PI), (float)(90 / 180.0 * Math.PI), dist+frame.MaxVect.Z );
+
+        }
+
+        private Matrix4x4 GenerateCameraTransform(Vector4 min, Vector4 max, Vector4 mid)
         {
+            var target = new Vector3(mid.X, mid.Y, mid.Z) + delta;
+
+            var eye = new Vector3((float)(currEye.Z * Math.Cos(currEye.X) * Math.Cos(currEye.Y)),
+                                  (float)(currEye.Z * Math.Sin(currEye.X)),
+                                  (float)(currEye.Z * Math.Cos(currEye.X) * Math.Sin(currEye.Y)));
+
+            Vector3 x = new Vector3((float)Math.Sin(currEye.Y), 0, -(float)Math.Cos(currEye.Y));
+
+            var zAsix = Vector3.Normalize(eye - target);
+
+            var yAsix = Vector3.Normalize(Vector3.Cross(zAsix, x ));
+
+            var xAsix = Vector3.Normalize(Vector3.Cross(yAsix,zAsix));
+
+            return new Matrix4x4(xAsix.X, yAsix.X, zAsix.X, 0,
+                                 xAsix.Y, yAsix.Y, zAsix.Y, 0,
+                                 xAsix.Z, yAsix.Z, zAsix.Z, 0,
+                                 -Vector3.Dot(xAsix, eye), -Vector3.Dot(yAsix, eye), -Vector3.Dot(zAsix, eye), 1);
+            /*
+             
             var target = new Vector3(mid.X, mid.Y, max.Z) + delta;
 
             var dist = Math.Max((max.X - min.X), (max.Y - min.Y)) ;
 
 
-            eye = target;
+            var eye = target;
 
             eye.Z += dist;
 
@@ -78,6 +110,8 @@ namespace WpfApp1
                                  xAsix.Y, yAsix.Y, zAsix.Y, 0,
                                  xAsix.Z, yAsix.Z, zAsix.Z, 0,
                                  -Vector3.Dot(xAsix, eye), -Vector3.Dot(yAsix, eye), -Vector3.Dot(zAsix, eye), 1);
+             
+             */
         }
 
         private Matrix4x4 GenerateProjectionTransform(int h, int w, Vector4 min, Vector4 max, float fov)
@@ -106,10 +140,6 @@ namespace WpfApp1
                                  min.X + hlfW, min.Y + hlH, 0, 1);
         }
 
-        private void AlgBrezhema(WriteableBitmap bitmap, Vector4 x1y1, Vector4 x2y2)
-        {
-
-        }
 
         private void AlgDDA(WriteableBitmap bitmap, Vector4 x1y1, Vector4 x2y2)
         {
@@ -140,14 +170,11 @@ namespace WpfApp1
 
         public void Render(WriteableBitmap bitmap)
         {
-            //var frame = obj.GenerateFrame(WorldTransform,CameraTransform,ProjectionTransform,WindowTransform); // multiplying Wind*Proj*Camer*World
             var frame = obj.NewFrame();
 
             frame.TranslateTo(GenerateWorldTransform(-frame.Middle));
-            Vector3 eye;
-            float fov = 60;
-            frame.TranslateTo(GenerateCameraTransform(frame.MinVect, frame.MaxVect, frame.Middle, out eye, fov));
-            frame.TranslateTo(GenerateProjectionTransform(bitmap.PixelHeight, bitmap.PixelWidth, frame.MinVect, frame.MaxVect, fov));
+            frame.TranslateTo(GenerateCameraTransform(frame.MinVect, frame.MaxVect, frame.Middle));
+            frame.TranslateTo(GenerateProjectionTransform(bitmap.PixelHeight, bitmap.PixelWidth, frame.MinVect, frame.MaxVect,fov));
             frame.DivideByW();
             frame.TranslateTo(GenerateWindowTransform(bitmap.PixelHeight, bitmap.PixelWidth, frame.MinVect));
 
