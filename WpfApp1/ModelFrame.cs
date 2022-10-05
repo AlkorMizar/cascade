@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace WpfApp1
 {
     struct ModelFrame
     {
         System.Numerics.Vector4[] vertexes;
+        public float[] zCoords;
         List<Polygon> polygons;
 
         Vector4 minVect, maxVect;
@@ -19,6 +22,11 @@ namespace WpfApp1
                 return (MaxVect + MinVect)/2;
             }
         }
+        public Vector4 Light { get; private set; }
+
+
+
+        public Vector4 this[int ind] { get { return vertexes[ind]; } }
 
         IReadOnlyCollection<System.Numerics.Vector4> Vertexes { get { return vertexes; } }
 
@@ -27,11 +35,13 @@ namespace WpfApp1
             polygons = _polygons;
             minVect = _minVect;
             maxVect = _maxVect;
+            zCoords=new float[size];
+            Light = new Vector4();
         }
 
         public void TranslateTo(System.Numerics.Matrix4x4 transfMatrix) 
         {
-            maxVect.X = maxVect.Y = maxVect.Z = 0;
+            maxVect.X = maxVect.Y = maxVect.Z = float.MinValue;
             minVect.X = minVect.Y = minVect.Z = float.MaxValue;
             for (int i = 0; i < vertexes.Length; i++)
             {
@@ -53,15 +63,24 @@ namespace WpfApp1
             }
         }
 
-        public void ResetVertexes(List<System.Numerics.Vector4> vrts)
+        public void ResetVertexes(List<System.Numerics.Vector4> vrts,Vector4 light)
         {
+            Light=light;
             for (int i = 0; i < vrts.Count; i++)
             {
                 vertexes[i]=vrts[i];
+                zCoords[i] = 0;
             }
         }
 
-        public IEnumerator<(System.Numerics.Vector4 x1y1, System.Numerics.Vector4 x2y2)> GetEnumerator()
+        public void SetZCoord() {
+            for (int i = 0; i < vertexes.Length; i++)
+            {
+                zCoords[i] = vertexes[i].Z;
+            }
+        }
+
+        /*public IEnumerator<(System.Numerics.Vector4 x1y1, System.Numerics.Vector4 x2y2)> GetLines()
         {
             foreach (var polygon in polygons)
             {
@@ -69,6 +88,18 @@ namespace WpfApp1
                 {
                     yield return (vertexes[line.f-1], vertexes[line.s-1]);
                 }
+            }
+        }*/
+
+        public (System.Numerics.Vector4 x1y1, System.Numerics.Vector4 x2y2) GetLine((int f, int s) ids) { 
+            return (vertexes[ids.f - 1], vertexes[ids.s - 1]);
+        }
+
+        public IEnumerator<Polygon> GetEnumerator()
+        {
+            foreach (var polygon in polygons)
+            {
+                yield return polygon;
             }
         }
     }

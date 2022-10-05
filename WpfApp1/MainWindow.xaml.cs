@@ -29,7 +29,7 @@ namespace WpfApp1
         int currBitmap;
         const int bitmapCount = 2;
         OBJRenderer render;
-        float pitch = 0, yaw=-90;
+        float pitch = 0, yaw=90;
 
         public MainWindow()
         {
