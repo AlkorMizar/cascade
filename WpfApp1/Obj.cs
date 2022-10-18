@@ -112,12 +112,12 @@ namespace WpfApp1
             return (xy1, xy2, xy3);
         }
 
-        public Vector3 GetNormal(ModelFrame fr)
+        public float GetNormal(ModelFrame fr)
         {
             var (v4_12, v4_13) = (fr[vertexes[0] - 1] - fr[vertexes[1] - 1], fr[vertexes[0] - 1] - fr[vertexes[2] - 1]);
-            var v12 = new Vector3(v4_12.X, v4_12.Y, v4_12.W);
-            var v13 = new Vector3(v4_13.X, v4_13.Y, v4_13.W);
-            return Vector3.Normalize(Vector3.Cross(v12, v13));
+            var v12 = new Vector3(v4_12.X, v4_12.Y, v4_12.Z);
+            var v13 = new Vector3(v4_13.X, v4_13.Y, v4_13.Z);
+            return Vector3.Dot(v12, v13);
         }
     }
 }

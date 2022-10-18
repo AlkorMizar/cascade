@@ -99,8 +99,8 @@ namespace WpfApp1
 
         private Matrix4x4 GenerateProjectionTransform(int h, int w,float fov)
         {
-            float znear = 10;
-            float zfar = -1000;
+            float znear = 1;
+            float zfar = 100;
             float zz = zfar / (znear - zfar);
             float aspect = h / (float)w;
             float tan = (float)Math.Tan(Math.PI / 180 * fov / 2);
@@ -126,7 +126,7 @@ namespace WpfApp1
 
         private void AlgDDA(WriteableBitmap bitmap, Vector4 x1y1, Vector4 x2y2,int color)
         {
-            var L = Math.Max(Math.Abs(x2y2.X - x1y1.X), Math.Abs(x2y2.Y - x1y1.Y))*2.5f;
+            var L = Math.Max(Math.Abs(x2y2.X - x1y1.X), Math.Abs(x2y2.Y - x1y1.Y))*2f;
             var deltX = (x2y2.X - x1y1.X) / L;
             var deltY = (x2y2.Y - x1y1.Y) / L;
             var deltZ = (x2y2.Z - x1y1.Z) / L;
@@ -161,7 +161,7 @@ namespace WpfApp1
 
         private void StraigthLine(WriteableBitmap bitmap, Vector4 x1y1, Vector4 x2y2, int color)
         {
-            var L = Math.Abs(x2y2.X - x1y1.X)*1.5f;
+            var L = Math.Abs(x2y2.X - x1y1.X)*2f;
             var deltX =(x2y2.X - x1y1.X)/L;
             var deltZ = (x2y2.Z - x1y1.Z) / L;
 
@@ -194,8 +194,8 @@ namespace WpfApp1
         }
 
         public void DrawPolygon(ModelFrame frame, Polygon poly,WriteableBitmap bitmap, Vector3 eye, Vector3 light) {
-            var r = Vector3.Dot(Vector3.Normalize(eye), poly.normal);
-            if (r <-0.15)
+            var tmp = poly.GetNormal(frame);
+            if (tmp <float.MinValue)
             {
                 return;
             }
@@ -206,7 +206,7 @@ namespace WpfApp1
             var eq23 = new Equation(xy2, xy3);
             var color = GetColor(xy1, xy2, xy3, poly.normal,light);
             
-            for (var y = xy1.Y;  y < xy2.Y ; y+=0.5f)
+            for (var y = xy1.Y;  y < xy2.Y ; y+=0.6f)
             {
                 var xyz1 = eq12.GetCoords(y);
                 var xyz2 = eq13.GetCoords(y);
@@ -214,7 +214,7 @@ namespace WpfApp1
 
             }
 
-            for (var y = xy2.Y;   y < xy3.Y; y += 0.5f)
+            for (var y = xy2.Y;   y < xy3.Y; y += 0.6f)
             {
                 var xyz1 = eq23.GetCoords(y);
                 var xyz2 = eq13.GetCoords(y);
@@ -222,8 +222,8 @@ namespace WpfApp1
             }
         }
 
-        private int GetColor(Vector4 xy1, Vector4 xy2, Vector4 xy3, Vector3 normal,Vector3 eye) {
-            float cos1 =Math.Max(0, Vector3.Dot(eye, normal)) ;
+        private int GetColor(Vector4 xy1, Vector4 xy2, Vector4 xy3, Vector3 normal,Vector3 light) {
+            float cos1 =Math.Max(0, Vector3.Dot(light, normal)) ;
             var cos = (byte)(cos1 * 255);
             var c = System.Drawing.Color.FromArgb(255, cos, cos, cos).ToArgb();
 
