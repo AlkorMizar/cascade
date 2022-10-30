@@ -22,7 +22,7 @@ namespace WpfApp1
     /// </summary>
     public partial class MainWindow : Window
     {
-        const string path = @"D:\Projects\NET\cascade\model";
+        const string path = @"D:\Projects\NET\cascade2\model";
         bool isMoving = false;
         Point prevPosition;
         WriteableBitmap[] bitmaps;

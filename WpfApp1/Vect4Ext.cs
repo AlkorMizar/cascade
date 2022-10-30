@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace WpfApp1
 {
@@ -29,9 +30,28 @@ namespace WpfApp1
             }
         }
 
+        public static void MinByYWitnNorm(ref (Vector4 v,Vector3 n) min,ref (Vector4 v, Vector3 n) v)
+        {
+            if (min.v.Y > v.v.Y)
+            {
+                (min, v) = (v, min);
+            }
+        }
+        public static void MinByYWitNE(ref (Vector4 v, Vector3 n,Vector3 e) min, ref (Vector4 v, Vector3 n, Vector3 e) v)
+        {
+            if (min.v.Y > v.v.Y)
+            {
+                (min, v) = (v, min);
+            }
+        }
+
         public static (float k, float b) GetEquation(this ref Vector4 xy1, Vector4 xy2) {
             var k = (xy1.Y - xy2.Y) / (xy1.X - xy2.X);
             return (k, xy1.Y - xy1.X * k);
+        }
+
+        public static Vector3 GetVect3(this ref Vector4 v) {
+            return new Vector3(v.X, v.Y, v.Z);
         }
     }
 }

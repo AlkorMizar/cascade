@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -8,10 +9,9 @@ namespace WpfApp1
 {
     class Obj
     {
-        List<Vector4> vertexes;
-        List<Vector3> textures;
-        List<Vector3> normals;
-        List<Vector3> polygNorm;
+        public List<Vector4> vertexes;
+        public List<Vector3> textures;
+        public List<Vector3> Normals { get; set; }
         List<Polygon> polygons;
         ModelFrame frame;
 
@@ -27,7 +27,7 @@ namespace WpfApp1
         {
             vertexes = new List<Vector4>();
             textures = new List<Vector3>();
-            normals = new List<Vector3>();
+            Normals = new List<Vector3>();
             polygons = new List<Polygon>();
             minVect = new Vector4(float.MaxValue, float.MaxValue, float.MaxValue, 0);
         }
@@ -46,7 +46,7 @@ namespace WpfApp1
 
         public void AddNormal(float i, float j, float k)
         {
-            normals.Add(new Vector3(i, j, k));
+            Normals.Add(new Vector3(i, j, k));
         }
 
         public void AddPolygon(List<(int, int?, int?)> vert)
@@ -59,9 +59,9 @@ namespace WpfApp1
             frame = new ModelFrame(vertexes.Count, polygons, minVect, maxVect);
         }
 
-        public ModelFrame NewFrame(Vector4 light)
+        public ModelFrame NewFrame()
         {
-            frame.ResetVertexes(vertexes,light);
+            frame.ResetVertexes(vertexes);
             return frame;
         }
     }
@@ -73,8 +73,9 @@ namespace WpfApp1
         public List<int> normals;
         int vertL;
         public Vector3 normal { get; private set; }
+        private Obj obj;
 
-        public Polygon(List<(int, int?, int?)> vertTextNorm, Obj obj)
+        public Polygon(List<(int, int?, int?)> vertTextNorm, Obj _obj)
         {
             vertexes = new List<int>(vertTextNorm.Count);
             textures = new List<int>(vertTextNorm.Count);
@@ -88,11 +89,9 @@ namespace WpfApp1
             }
             vertL = vertexes.Count;
 
-            var (v4_12, v4_13) = (obj[vertexes[0] - 1] - obj[vertexes[1] - 1], obj[vertexes[0] - 1] - obj[vertexes[2] - 1]);
+            obj = _obj;
 
-            var v12 = new Vector3(v4_12.X, v4_12.Y, v4_12.Z);
-            var v13 = new Vector3(v4_13.X, v4_13.Y, v4_13.Z);
-            normal = Vector3.Normalize(Vector3.Cross(v12, v13));
+            normal = (obj.Normals[normals[0] - 1] + obj.Normals[normals[1] - 1] + obj.Normals[normals[2] - 1]) / 3.0f;
         }
 
         public IEnumerator<(int f, int s)> GetEnumerator()
@@ -103,13 +102,24 @@ namespace WpfApp1
             }
         }
 
-        public (Vector4 xy1, Vector4 xy2, Vector4) GetPolygonCoordsByY(ModelFrame fr)
+        public (Vector4 xy1, Vector4 xy2, Vector4 xy3) GetPolygonCoordsByY(ModelFrame fr)
         {
             var (xy1, xy2, xy3) = (fr[vertexes[0] - 1], fr[vertexes[1] - 1], fr[vertexes[2] - 1]);
             Vect4Ext.MinByY(ref xy1, ref xy2);
             Vect4Ext.MinByY(ref xy1, ref xy3);
             Vect4Ext.MinByY(ref xy2, ref xy3);
             return (xy1, xy2, xy3);
+        }
+        public (Vector4 xy1, Vector3 n1, Vector3 e1, Vector4 xy2, Vector3 n2, Vector3 e2, Vector4 xy3, Vector3 n3, Vector3 e3) GetPolygonCoordsWithNormByY(ModelFrame fr, Vector4 Eye)
+        {
+            var (xy1, xy2, xy3) = (fr[vertexes[0] - 1], fr[vertexes[1] - 1], fr[vertexes[2] - 1]);
+            var (n1, n2, n3) = GetNormals();
+            var (e1, e2, e3) = GetEyeVects(Eye);
+            (Vector4 v, Vector3 n, Vector3 e) v1 = (xy1, n1, e1), v2 = (xy2, n2, e2), v3 = (xy3, n3, e3);
+            Vect4Ext.MinByYWitNE(ref v1, ref v2);
+            Vect4Ext.MinByYWitNE(ref v1, ref v3);
+            Vect4Ext.MinByYWitNE(ref v2, ref v3);
+            return (v1.v, v1.n, v1.e, v2.v, v2.n, v2.e, v3.v, v3.n, v3.e);
         }
 
         public float GetNormal(ModelFrame fr)
@@ -118,6 +128,18 @@ namespace WpfApp1
             var v12 = new Vector3(v4_12.X, v4_12.Y, v4_12.Z);
             var v13 = new Vector3(v4_13.X, v4_13.Y, v4_13.Z);
             return Vector3.Dot(v12, v13);
+        }
+
+        public (Vector3 n1, Vector3 n2, Vector3 n3) GetNormals()
+        {
+            return (obj.Normals[normals[0] - 1], obj.Normals[normals[1] - 1], obj.Normals[normals[2] - 1]);
+        }
+        public (Vector3 n1, Vector3 n2, Vector3 n3) GetEyeVects(Vector4 Eye)
+        {
+            var v1 = -Vector4.Normalize(Eye - obj.vertexes[vertexes[0] - 1]);
+            var v2 = -Vector4.Normalize(Eye - obj.vertexes[vertexes[1] - 1]);
+            var v3 = -Vector4.Normalize(Eye - obj.vertexes[vertexes[2] - 1]);
+            return (v1.GetVect3(), v2.GetVect3(), v3.GetVect3());
         }
     }
 }
