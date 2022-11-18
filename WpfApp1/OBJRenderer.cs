@@ -24,8 +24,8 @@ namespace WpfApp1
             zMap = new float[1][];
             zMap[0] = new float[1];
             var c = System.Drawing.Color.FromArgb(255,225,225,225);
-            var L = Vector3.Normalize(new Vector3(0, 1, 1));
-            coloGen = new Colors(c, 0.15f, c, 0.7f, L, c, 0.7f, 15f, L);
+            var L = Vector3.Normalize(new Vector3(10, 2, 2));
+            coloGen = new Colors(c, 0.15f, c, 0.7f, L, c, 0.7f, 5f, L);
         }
 
         private Matrix4x4 GenerateWorldTransform(Vector4 middle)
