@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -12,6 +13,7 @@ namespace WpfApp1
         float kx, kz;
         Vector3 kvn,kve, n1,e1;
         Vector4 x1y1z1;
+        Polygon.AllDotInfo vstart, vdelta, vend;
 
         public Equation(Vector4 xy1, Vector4 xy2)
         {
@@ -46,6 +48,18 @@ namespace WpfApp1
             kve = (e1 - e2) / sub.Y;
         }
 
+        public Equation(Polygon.AllDotInfo v1, Polygon.AllDotInfo v2)
+        {
+            vstart = v1;
+            vend = v2;
+            vdelta = vstart.delta(v2);
+        }
+
+        public Polygon.AllDotInfo GetAll(float y)
+        {
+            return vdelta * (y - vstart.v.Y) + vstart;
+        }
+
         public Vector4 GetCoords(float y)
         {
 
@@ -72,6 +86,16 @@ namespace WpfApp1
             var n = kvn * (y - x1y1z1.Y) + n1;
             var e = kve * (y - x1y1z1.Y) + e1;
             return (new Vector4(x, y, z, 1), n,e);
+        }
+
+        public Polygon.AllDotInfo GetByAllDot(float y)
+        {
+            var t = (y - vstart.v.Y)/(vend.v.Y-vstart.v.Y);
+            var tex = vstart.t * (1 - t)/vstart.v.W + vend.t * t/vend.v.W;
+            var z = (1 - t) / vstart.v.W + t / vend.v.W;
+            var res = vdelta * (y - vstart.v.Y) + vstart;
+            res.t = tex/z;
+            return res;
         }
     }
 }

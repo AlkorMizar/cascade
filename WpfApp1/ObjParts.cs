@@ -9,5 +9,8 @@ namespace WpfApp1
     struct ObjParts
     {
         public string pathToOBJ;
+        public string pathToNormal;
+        public string pathToMirr;
+        public string pathToTexture;
     }
 }

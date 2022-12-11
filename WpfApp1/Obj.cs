@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.Intrinsics;
 
 namespace WpfApp1
 {
@@ -14,6 +15,8 @@ namespace WpfApp1
         public List<Vector3> Normals { get; set; }
         List<Polygon> polygons;
         ModelFrame frame;
+
+        Vector3[,] TextMap, NormMap, MirrMap;
 
         Vector4 minVect, maxVect;
         public Vector4 MinVect { get => frame.MaxVect; }//deprecated
@@ -54,14 +57,21 @@ namespace WpfApp1
             polygons.Add(new Polygon(vert, this));
         }
 
+        public void SetMaps(Vector3[,] t, Vector3[,] m, Vector3[,] n)
+        {
+            TextMap = t;
+            NormMap = n;
+            MirrMap = m;
+        }
+
         public void Finish()
         {
-            frame = new ModelFrame(vertexes.Count, polygons, minVect, maxVect);
+            frame = new ModelFrame(vertexes.Count, Normals.Count, textures.Count, polygons, minVect, maxVect, TextMap, MirrMap, NormMap);
         }
 
         public ModelFrame NewFrame()
         {
-            frame.ResetVertexes(vertexes);
+            frame.ResetVertexes(vertexes, Normals, textures);
             return frame;
         }
     }
@@ -74,6 +84,78 @@ namespace WpfApp1
         int vertL;
         public Vector3 normal { get; private set; }
         private Obj obj;
+
+        public struct AllDotInfo
+        {
+            public Vector4 v;
+            public Vector3 t;
+            public Vector3 e;
+
+            public AllDotInfo(Vector4 v, Vector3 t, Vector3 e)
+            {
+                this.v = v;
+                this.t = t;
+                this.e = e;
+            }
+
+            public static void Min(ref AllDotInfo min, ref AllDotInfo v)
+            {
+                if (min.v.Y > v.v.Y)
+                {
+                    (min, v) = (v, min);
+                }
+            }
+
+            public AllDotInfo delta(AllDotInfo v2)
+            {
+                AllDotInfo res = this;
+
+                var sub = res.v - v2.v;
+                res.v = sub / sub.Y;
+
+                res.e = (res.e - v2.e) / sub.Y;
+                res.t = (res.t - v2.t) / sub.Y;
+                return res;
+            }
+
+            public static AllDotInfo operator *(AllDotInfo v1, AllDotInfo v2)
+            {
+                v1.v *= v2.v;
+                v1.e *= v2.e;
+                v1.t *= v2.t;
+                return v1;
+            }
+            public static AllDotInfo operator *(AllDotInfo v1, float k)
+            {
+                v1.v *= k;
+                v1.e *= k;
+                v1.t *= k;
+                return v1;
+            }
+
+            public static AllDotInfo operator /(AllDotInfo v1, float k)
+            {
+                v1.v /= k;
+                v1.e /= k;
+                v1.t /= k;
+                return v1;
+            }
+            public static AllDotInfo operator +(AllDotInfo v1, AllDotInfo v2)
+            {
+                v1.v += v2.v;
+                v1.e += v2.e;
+                v1.t += v2.t;
+                return v1;
+            }
+
+            public static AllDotInfo operator -(AllDotInfo v1, AllDotInfo v2)
+            {
+                v1.v -= v2.v;
+                v1.e -= v2.e;
+                v1.t -= v2.t;
+                return v1;
+            }
+        }
 
         public Polygon(List<(int, int?, int?)> vertTextNorm, Obj _obj)
         {
@@ -120,6 +202,23 @@ namespace WpfApp1
             Vect4Ext.MinByYWitNE(ref v1, ref v3);
             Vect4Ext.MinByYWitNE(ref v2, ref v3);
             return (v1.v, v1.n, v1.e, v2.v, v2.n, v2.e, v3.v, v3.n, v3.e);
+        }
+
+        public (AllDotInfo v1, AllDotInfo v2, AllDotInfo v3) GetPolygonCoordsWithNormANDTextByY(ModelFrame fr, Vector4 Eye)
+        {
+            var (xy1, xy2, xy3) = (fr.Vertexes[vertexes[0] - 1], fr.Vertexes[vertexes[1] - 1], fr.Vertexes[vertexes[2] - 1]);
+            var (t1, t2, t3) = (fr.Textures[textures[0] - 1], fr.Textures[textures[1] - 1], fr.Textures[textures[2] - 1]);
+            var (e1, e2, e3) = GetEyeVects(Eye);
+
+            var iv1 = new AllDotInfo(xy1, t1, e1);
+            var iv2 = new AllDotInfo(xy2, t2, e2);
+            var iv3 = new AllDotInfo(xy3, t3, e3);
+
+            AllDotInfo.Min(ref iv1, ref iv2);
+            AllDotInfo.Min(ref iv1, ref iv3);
+            AllDotInfo.Min(ref iv2, ref iv3);
+
+            return (iv1, iv2, iv3);
         }
 
         public float GetNormal(ModelFrame fr)

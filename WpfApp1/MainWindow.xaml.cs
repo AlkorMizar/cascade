@@ -79,6 +79,9 @@ namespace WpfApp1
             }
             ObjParts parts;
             parts.pathToOBJ = files[0];
+            parts.pathToTexture = path + "/t.jpg";
+            parts.pathToMirr = path + "/m.jpg";
+            parts.pathToNormal = path + "/n.jpg";
             return parts;
         }
 

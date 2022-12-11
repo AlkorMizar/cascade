@@ -44,6 +44,13 @@ namespace WpfApp1
                 (min, v) = (v, min);
             }
         }
+        public static void MinByYWithVects(ref (Vector4 v, Vector3 n, Vector3 t, Vector3 e) min, ref (Vector4 v, Vector3 n, Vector3 t, Vector3 e) v)
+        {
+            if (min.v.Y > v.v.Y)
+            {
+                (min, v) = (v, min);
+            }
+        }
 
         public static (float k, float b) GetEquation(this ref Vector4 xy1, Vector4 xy2) {
             var k = (xy1.Y - xy2.Y) / (xy1.X - xy2.X);
