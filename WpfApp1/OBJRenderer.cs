@@ -23,10 +23,10 @@ namespace WpfApp1
             currEye = GenrateCurrCameraPoint();
             zMap = new float[1][];
             zMap[0] = new float[1];
-            var cdif = System.Drawing.Color.FromArgb(200, 200, 200, 225);
-            var cmirr = System.Drawing.Color.FromArgb(200, 200, 200, 225);
+            var cdif = System.Drawing.Color.FromArgb(100, 100, 100, 225);
+            var cmirr = System.Drawing.Color.FromArgb(2, 200, 200, 225);
             var L = Vector3.Normalize(new Vector3(0, 0, 1));
-            coloGen = new Colors(cdif, 0.15f, cdif, 0.1f, L, cmirr, 0.7f, 5f, L);
+            coloGen = new Colors(cdif, 0.1f, cdif, 0.1f, L, cmirr, 0.7f, 15f, L);
         }
 
         private Matrix4x4 GenerateWorldTransform(Vector4 middle)
@@ -66,7 +66,7 @@ namespace WpfApp1
             var dist = (float)Math.Sqrt(max2 * max2 + max1 * max1);
 
 
-            return new Vector3((float)(90 / 180.0 * Math.PI), (float)(0 / 180.0 * Math.PI), dist);
+            return new Vector3((float)(90 / 180.0 * Math.PI), (float)(-90 / 180.0 * Math.PI), dist);
 
         }
 
@@ -324,7 +324,7 @@ namespace WpfApp1
                     var t = fr.GetTexture(vt.X, vt.Y);
                     var n = fr.GetNormals(vt.X, vt.Y);
                     var m = fr.GetMirror(vt.X, vt.Y);
-                    *((int*)pBackBuffer + deltColumn) = coloGen.CalcWithColors(Vector3.Normalize(n) * 2 - new Vector3(1, 1, 1), e, m, t);
+                    *((int*)pBackBuffer + deltColumn) = coloGen.CalcWithColors(n * 2 - new Vector3(1, 1, 1), e, m, t);
 
                     zMap[deltRow][deltColumn] = dot.Z;
                 }
@@ -497,13 +497,13 @@ namespace WpfApp1
 
 
             var R = Vector3.Normalize(L - 2 * Vector3.Dot(Lm, N) * N);
-            var tt = Vector3.Dot(-R, E);
+            var tt = Vector3.Dot(R, E);
             var kmirr = mirror.X * Math.Pow(Math.Max(0, tt), alpha);
             var mirr = System.Drawing.Color.FromArgb(255, (byte)(im.R * kmirr), (byte)(im.G * kmirr), (byte)(im.B * kmirr));
 
-            byte r = (byte)Math.Min(255, mirr.R + fontC.R + dif.R);
-            byte g = (byte)Math.Min(255, mirr.G + fontC.G + dif.G);
-            byte b = (byte)Math.Min(255, mirr.B + fontC.B + dif.B);
+            byte r = (byte)Math.Min(255, fontC.R + dif.R + mirr.R);
+            byte g = (byte)Math.Min(255, fontC.G + dif.G + mirr.G);
+            byte b = (byte)Math.Min(255, fontC.B + dif.B + mirr.B);
 
             return System.Drawing.Color.FromArgb(255, r, g, b).ToArgb();
             //return fontC.ToArgb();
